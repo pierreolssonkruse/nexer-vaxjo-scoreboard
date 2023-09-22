@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Scoreboard from './Scoreboard';
-import { Button, Input } from '@mui/material';
+import { Button, TextField, Paper, Container, Grid, Typography } from '@mui/material';
+import { ThemeProvider } from '@mui/material/styles';
+import theme from './theme';
 
 function App() {
   const [scores, setScores] = useState([]);
@@ -54,23 +56,41 @@ function App() {
   };
 
   return (
-    <div className="App">
-      <h1>Nexer Växjö Tabletop Scoreboard</h1>
-      <div>
-        <Input
-          value={newPlayerName}
-          onChange={e => setNewPlayerName(e.target.value)}
-          placeholder="Enter player name"
-        />
-        <Button onClick={handleAddPlayer}>Add Player</Button>
-      </div>
-      <Scoreboard
-        scores={scores}
-        incrementScore={incrementScore}
-        decrementScore={decrementScore}
-        resetScores={resetScores}
-      />
-    </div>
+    <ThemeProvider theme={theme}>
+      <Container>
+        <Grid container spacing={3} direction="column" alignItems="center">
+          <Grid item>
+            <Typography variant="h3" gutterBottom>
+              Nexer Växjö Tabletop Hockey Scoreboard
+            </Typography>
+          </Grid>
+          <Grid item>
+            <TextField
+              value={newPlayerName}
+              onChange={e => setNewPlayerName(e.target.value)}
+              placeholder="Enter player name"
+              variant="outlined"
+              label="Player Name"
+            />
+            <Grid item>
+              <Button onClick={handleAddPlayer} variant="contained" color="primary" style={{ marginLeft: '35px', marginTop: '10px' }}>
+                Add Player
+              </Button>
+            </Grid>
+          </Grid>
+          <Grid item xs={12}>
+            <Paper elevation={3} style={{ padding: '20px' }}>
+              <Scoreboard
+                scores={scores}
+                incrementScore={incrementScore}
+                decrementScore={decrementScore}
+                resetScores={resetScores}
+              />
+            </Paper>
+          </Grid>
+        </Grid>
+      </Container>
+    </ThemeProvider>
   );
 }
 
