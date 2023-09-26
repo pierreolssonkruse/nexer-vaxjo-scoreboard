@@ -2,7 +2,7 @@ import React from 'react';
 import { Button, Typography, Grid, IconButton, Card, CardContent, CardActions } from '@mui/material';
 import { Add, Remove, Delete } from '@mui/icons-material';
 
-function Scoreboard({ scores, incrementScore, decrementScore, resetScores, deletePlayer }) {
+function Scoreboard({ scores, incrementScore, decrementScore, resetScores, deletePlayer, isGameOn }) {
   const styles = {
     card: {
       display: 'flex',
@@ -23,17 +23,16 @@ function Scoreboard({ scores, incrementScore, decrementScore, resetScores, delet
             <CardContent>
               <Typography variant="h5">{score.name}: {score.score}</Typography>
             </CardContent>
-            <CardActions style={styles.actions}>
-              <IconButton onClick={() => decrementScore(score.name)}>
-                <Remove />
-              </IconButton>
-              <IconButton onClick={() => incrementScore(score.name)}>
-                <Add />
-              </IconButton>
-              <IconButton onClick={() => deletePlayer(score.id)}>
-                <Delete />
-              </IconButton>
-            </CardActions>
+            {!isGameOn && (
+              <CardActions style={styles.actions}>
+                <IconButton onClick={() => decrementScore(score.name)}>
+                  <Remove />
+                </IconButton>
+                <IconButton onClick={() => incrementScore(score.name)}>
+                  <Add />
+                </IconButton>
+              </CardActions>
+            )}
           </Card>
         </Grid>
       ))}

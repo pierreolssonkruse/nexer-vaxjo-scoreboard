@@ -1,12 +1,11 @@
 const express = require('express');
-const bodyParser = require('body-parser');
 const cors = require('cors');
 const db = require('./database');
 
 const app = express();
 const PORT = 3001;
 
-app.use(bodyParser.json());
+app.use(express.json());
 app.use(cors());
 
 app.get('/scores', (req, res) => {
@@ -18,18 +17,60 @@ app.get('/scores', (req, res) => {
   });
 });
 
-app.post('/score', (req, res) => {
-  const { name, score, history } = req.body;
-  db.run("INSERT INTO scores (name, score) VALUES (?, ?)", [name, score], function (err) {
+app.get('/rankings', (req, res) => {
+  const query = `
+    SELECT * FROM scores
+    ORDER BY (wins / games_played) DESC, total_goals DESC, wins DESC
+  `;
+  db.all(query, [], (err, rows) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    return res.json({ data: rows });
+  });
+});
+
+
+app.post('/scores', (req, res) => {
+  const { name } = req.body;
+  if (!name) {
+    return res.status(400).json({ "error": "Player name is required" });
+  }
+  const sql = 'INSERT INTO scores (name, score, wins, games_played, total_goals) VALUES (?, 0, 0, 0, 0)';
+  db.run(sql, name, function (err) {
     if (err) {
       res.status(400).json({ "error": err.message });
       return;
     }
-    res.json({ "id": this.lastID });
+    res.json({ "player_id": this.lastID });
   });
 });
 
-app.put('/score/:name', (req, res) => {
+app.post('/gameResult', (req, res) => {
+  const { player1_id, player2_id, player1_score, player2_score } = req.body;
+
+  if (!player1_id || !player2_id || player1_score === undefined || player2_score === undefined) {
+    return res.status(400).json({ error: "Incomplete game data" });
+  }
+
+  const currentDate = new Date().toISOString().slice(0, 10);
+
+  const sql = `
+    INSERT INTO games (player1_id, player2_id, player1_score, player2_score, date)
+    VALUES (?, ?, ?, ?, ?)
+  `;
+
+  db.run(sql, [player1_id, player2_id, player1_score, player2_score, currentDate], function (err) {
+    if (err) {
+      res.status(400).json({ error: err.message });
+      return;
+    }
+    res.json({ game_id: this.lastID });
+  });
+});
+
+
+app.put('/scores/:name', (req, res) => {
   const playerName = req.params.name;
   const { score } = req.body;
   db.run("UPDATE scores SET score = ? WHERE name = ?", [score, playerName], function (err) {
@@ -41,7 +82,7 @@ app.put('/score/:name', (req, res) => {
   });
 });
 
-app.delete('/score/:id', (req, res) => {
+app.delete('/scores/:id', (req, res) => {
   const sql = 'DELETE FROM scores WHERE id = ?';
   db.run(sql, req.params.id, function (err) {
     if (err) {
