@@ -17,37 +17,76 @@ function App() {
   }, []);
 
   const handleAddPlayer = () => {
-    setScores(prevScores => [...prevScores, { name: newPlayerName, score: 0, history: [] }]);
-    setNewPlayerName('');
+    const newPlayer = { name: newPlayerName, score: 0, history: [] };
+    axios.post('http://localhost:3001/score', newPlayer)
+      .then(response => {
+        setScores(prevScores => [...prevScores, { ...newPlayer, id: response.data.id }]);
+        setNewPlayerName('');
+      })
+      .catch(error => {
+        console.error("Error adding player:", error);
+      });
+  };
+
+  const handleDeletePlayer = (id) => {
+    axios.delete(`http://localhost:3001/score/${id}`)
+      .then(() => {
+        const updatedScores = scores.filter(score => score.id !== id);
+        setScores(updatedScores);
+      })
+      .catch(error => {
+        console.error("Error deleting player:", error);
+      });
   };
 
   const incrementScore = (name) => {
-    const updatedScores = scores.map(score => {
-      if (score.name === name) {
-        return {
-          ...score,
-          score: score.score + 1,
-          history: [...score.history, `Added 1 point. New score: ${score.score + 1}`]
-        };
-      }
-      return score;
-    });
-    setScores(updatedScores);
+    const playerScore = scores.find(score => score.name === name);
+    const updatedScoreValue = playerScore.score + 1;
+
+    const playerHistory = Array.isArray(playerScore.history) ? playerScore.history : [];
+
+    axios.put(`http://localhost:3001/score/${name}`, { score: updatedScoreValue })
+      .then(response => {
+        const updatedScores = scores.map(score => {
+          if (score.name === name) {
+            return {
+              ...score,
+              score: updatedScoreValue,
+              history: [...playerHistory, `Added 1 point. New score: ${updatedScoreValue}`]
+            };
+          }
+          return score;
+        });
+        setScores(updatedScores);
+      })
+      .catch(error => {
+        console.error("Error incrementing score:", error);
+      });
   };
 
-
   const decrementScore = (name) => {
-    const updatedScores = scores.map(score => {
-      if (score.name === name) {
-        return {
-          ...score,
-          score: Math.max(0, score.score - 1),
-          history: [...score.history, `Removed 1 point. New score: ${score.score - 1}`]
-        };
-      }
-      return score;
-    });
-    setScores(updatedScores);
+    const playerScore = scores.find(score => score.name === name);
+    const updatedScoreValue = Math.max(0, playerScore.score - 1);
+
+    const playerHistory = Array.isArray(playerScore.history) ? playerScore.history : [];
+
+    axios.put(`http://localhost:3001/score/${name}`, { score: updatedScoreValue })
+      .then(response => {
+        const updatedScores = scores.map(score => {
+          if (score.name === name) {
+            return {
+              ...score,
+              score: updatedScoreValue,
+              history: [...playerHistory, `Removed 1 point. New score: ${updatedScoreValue}`]
+            };
+          }
+          return score;
+        });
+        setScores(updatedScores);
+      })
+      .catch(error => {
+        console.error("Error decrementing score:", error);
+      });
   };
 
   const resetScores = () => {
@@ -85,6 +124,7 @@ function App() {
                 incrementScore={incrementScore}
                 decrementScore={decrementScore}
                 resetScores={resetScores}
+                deletePlayer={handleDeletePlayer}
               />
             </Paper>
           </Grid>

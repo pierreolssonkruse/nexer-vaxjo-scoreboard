@@ -1,8 +1,8 @@
 import React from 'react';
 import { Button, Typography, Grid, IconButton, Card, CardContent, CardActions } from '@mui/material';
-import { Add, Remove } from '@mui/icons-material';
+import { Add, Remove, Delete } from '@mui/icons-material';
 
-function Scoreboard({ scores, incrementScore, decrementScore, resetScores }) {
+function Scoreboard({ scores, incrementScore, decrementScore, resetScores, deletePlayer }) {
   const styles = {
     card: {
       display: 'flex',
@@ -29,6 +29,9 @@ function Scoreboard({ scores, incrementScore, decrementScore, resetScores }) {
               </IconButton>
               <IconButton onClick={() => incrementScore(score.name)}>
                 <Add />
+              </IconButton>
+              <IconButton onClick={() => deletePlayer(score.id)}>
+                <Delete />
               </IconButton>
             </CardActions>
           </Card>
