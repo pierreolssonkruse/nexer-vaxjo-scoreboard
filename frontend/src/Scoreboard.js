@@ -1,41 +1,34 @@
-import React from 'react';
-import { Button, Typography, Grid, IconButton, Card, CardContent, CardActions } from '@mui/material';
-import { Add, Remove, Delete } from '@mui/icons-material';
+import { Button, Typography, Grid, Card, CardContent } from '@mui/material';
 
-function Scoreboard({ scores, incrementScore, decrementScore, resetScores, deletePlayer, isGameOn }) {
-  const styles = {
-    card: {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-    },
-    actions: {
-      display: 'flex',
-      alignItems: 'center',
-    }
-  };
-
+function Scoreboard({ games, resetScores }) {
   return (
     <Grid container spacing={3} direction="column" alignItems="center">
-      {scores.map(score => (
-        <Grid item key={score.name} xs={12}>
-          <Card style={styles.card}>
-            <CardContent>
-              <Typography variant="h5">{score.name}: {score.score}</Typography>
-            </CardContent>
-            {!isGameOn && (
-              <CardActions style={styles.actions}>
-                <IconButton onClick={() => decrementScore(score.name)}>
-                  <Remove />
-                </IconButton>
-                <IconButton onClick={() => incrementScore(score.name)}>
-                  <Add />
-                </IconButton>
-              </CardActions>
-            )}
-          </Card>
-        </Grid>
-      ))}
+      {games && games.length > 0 ? games.map((game, index) => {
+        const player1Name = game.scores[0].name;
+        const player1Score = game.scores[0].score;
+        const player2Name = game.scores[1].name;
+        const player2Score = game.scores[1].score;
+
+        return (
+          <Grid item key={index} xs={12}>
+            <Card>
+              <CardContent>
+                <Typography variant="h5">
+                  Date: {game.date}
+                </Typography>
+                <Typography variant="body1">
+                  {player1Name}: {player1Score}
+                </Typography>
+                <Typography variant="body1">
+                  {player2Name}: {player2Score}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+        );
+      }) : (
+        <Typography variant="body1">No games available.</Typography>
+      )}
       <Grid item>
         <Button variant="contained" color="secondary" onClick={resetScores}>
           Reset Scores
@@ -46,3 +39,4 @@ function Scoreboard({ scores, incrementScore, decrementScore, resetScores, delet
 }
 
 export default Scoreboard;
+

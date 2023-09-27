@@ -30,6 +30,35 @@ app.get('/rankings', (req, res) => {
   });
 });
 
+app.get('/gameResults', (req, res) => {
+  const query = `
+      SELECT g.id, g.date, 
+             p1.name as player1_name, g.player1_score,
+             p2.name as player2_name, g.player2_score
+      FROM games g
+      JOIN scores p1 ON g.player1_id = p1.id
+      JOIN scores p2 ON g.player2_id = p2.id
+      ORDER BY g.date DESC
+  `;
+
+  db.all(query, [], (err, rows) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+    const formattedData = rows.map(row => {
+      return {
+        date: row.date,
+        scores: [
+          { name: row.player1_name, score: row.player1_score },
+          { name: row.player2_name, score: row.player2_score }
+        ]
+      }
+    });
+    return res.json({ data: formattedData });
+  });
+});
+
+
 
 app.post('/scores', (req, res) => {
   const { name } = req.body;

@@ -11,6 +11,8 @@ function App() {
   const [isGameOn, setIsGameOn] = useState(false);
   const [currentGame, setCurrentGame] = useState({ player1_id: null, player2_id: null, player1_score: 0, player2_score: 0 });
   const [rankings, setRankings] = useState([]);
+  const [games, setGames] = useState([]);
+
 
   useEffect(() => {
     axios.get('http://localhost:3001/scores')
@@ -25,6 +27,19 @@ function App() {
         setRankings(response.data.data);
       });
   }, [scores]);
+
+  useEffect(() => {
+    fetch('http://localhost:3001/gameResults')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.data) {
+          setGames(data.data);
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching game results:', error);
+      });
+  }, []);
 
   const handleAddPlayer = () => {
     const newPlayer = { name: newPlayerName, score: 0, history: [] };
@@ -50,15 +65,28 @@ function App() {
   };
 
   const handleGameCompletion = () => {
-    console.log("Entered handleGameCompletion");
-    if (!currentGame.player1_id || !currentGame.player2_id) return;
-    axios.post('http://localhost:3001/gameResult', currentGame)
+    const gameResult = {
+      player1_id: currentGame.player1_id,
+      player2_id: currentGame.player2_id,
+      player1_score: currentGame.player1_score,
+      player2_score: currentGame.player2_score
+    };
+    axios.post('http://localhost:3001/gameResult', gameResult)
       .then(response => {
-        console.log('Game saved with ID:', response.data.game_id);
+        setGames(prevGames => [...prevGames, {
+          date: new Date().toISOString().slice(0, 10),
+          scores: [
+            { name: getPlayerNameFromID(currentGame.player1_id), score: currentGame.player1_score },
+            { name: getPlayerNameFromID(currentGame.player2_id), score: currentGame.player2_score }
+          ]
+        }]);
         setCurrentGame({ player1_id: null, player2_id: null, player1_score: 0, player2_score: 0 });
       })
       .catch(error => {
         console.error("Error saving game:", error);
+        if (error.response && error.response.data) {
+          console.error("Server response:", error.response.data);
+        }
       });
   };
 
@@ -130,6 +158,11 @@ function App() {
     }
   }
 
+  const getPlayerNameFromID = (id) => {
+    const player = scores.find(p => parseInt(p.id, 10) === parseInt(id, 10));
+    return player ? player.name : 'Unknown';
+  };
+
   return (
     <ThemeProvider theme={theme}>
       <Container>
@@ -170,10 +203,10 @@ function App() {
             )}
             {isGameOn && (
               <>
-                <Typography variant="h6">{scores.find(p => p.id === currentGame.player1_id)?.name || 'Unknown'}: {currentGame.player1_score}</Typography>
+                <Typography variant="h6">{getPlayerNameFromID(currentGame.player1_id)}: {currentGame.player1_score}</Typography>
                 <Button onClick={() => setCurrentGame({ ...currentGame, player1_score: Math.max(currentGame.player1_score - 1, 0) })}>-1</Button>
                 <Button onClick={() => setCurrentGame({ ...currentGame, player1_score: currentGame.player1_score + 1 })}>+1</Button>
-                <Typography variant="h6">{scores.find(p => p.id === currentGame.player2_id)?.name || 'Unknown'}: {currentGame.player2_score}</Typography>
+                <Typography variant="h6">{getPlayerNameFromID(currentGame.player2_id)}: {currentGame.player2_score}</Typography>
                 <Button onClick={() => setCurrentGame({ ...currentGame, player2_score: Math.max(currentGame.player2_score - 1, 0) })}>-1</Button>
                 <Button onClick={() => setCurrentGame({ ...currentGame, player2_score: currentGame.player2_score + 1 })}>+1</Button>
                 <Button variant="contained" color="secondary" onClick={handleGameCompletion}>Finish Game</Button>
@@ -182,14 +215,7 @@ function App() {
           </Grid>
           <Grid item xs={12}>
             <Paper elevation={3} style={{ padding: '20px' }}>
-              <Scoreboard
-                scores={scores}
-                incrementScore={incrementScore}
-                decrementScore={decrementScore}
-                resetScores={resetScores}
-                deletePlayer={handleDeletePlayer}
-                isGameOn={isGameOn}
-              />
+              <Scoreboard games={games} />
             </Paper>
           </Grid>
         </Grid>
