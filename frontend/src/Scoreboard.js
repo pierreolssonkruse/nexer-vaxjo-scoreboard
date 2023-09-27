@@ -29,14 +29,8 @@ function Scoreboard({ games, resetScores }) {
       }) : (
         <Typography variant="body1">No games available.</Typography>
       )}
-      <Grid item>
-        <Button variant="contained" color="secondary" onClick={resetScores}>
-          Reset Scores
-        </Button>
-      </Grid>
     </Grid>
   );
 }
 
 export default Scoreboard;
-
