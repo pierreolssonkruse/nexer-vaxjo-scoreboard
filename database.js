@@ -5,7 +5,10 @@ db.run(`
   CREATE TABLE IF NOT EXISTS scores (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT UNIQUE,
-    score INTEGER
+    score INTEGER,
+    wins INTEGER DEFAULT 0,
+    games_played INTEGER DEFAULT 0,
+    total_goals INTEGER DEFAULT 0
   )
 `);
 
@@ -20,18 +23,24 @@ db.run(`
     FOREIGN KEY(player1_id) REFERENCES scores(id),
     FOREIGN KEY(player2_id) REFERENCES scores(id)
   )
-`, function (err) {
+`);
+
+db.all("PRAGMA table_info(scores)", [], (err, columns) => {
   if (err) throw err;
 
-  db.run(`
-    ALTER TABLE scores ADD COLUMN wins INTEGER DEFAULT 0
-  `);
-  db.run(`
-    ALTER TABLE scores ADD COLUMN games_played INTEGER DEFAULT 0
-  `);
-  db.run(`
-    ALTER TABLE scores ADD COLUMN total_goals INTEGER DEFAULT 0
-  `);
+  const columnNames = columns.map(col => col.name);
+
+  if (!columnNames.includes('wins')) {
+    db.run(`ALTER TABLE scores ADD COLUMN wins INTEGER DEFAULT 0`);
+  }
+
+  if (!columnNames.includes('games_played')) {
+    db.run(`ALTER TABLE scores ADD COLUMN games_played INTEGER DEFAULT 0`);
+  }
+
+  if (!columnNames.includes('total_goals')) {
+    db.run(`ALTER TABLE scores ADD COLUMN total_goals INTEGER DEFAULT 0`);
+  }
 });
 
 module.exports = db;
