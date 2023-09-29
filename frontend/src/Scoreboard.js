@@ -1,4 +1,4 @@
-import { Button, Typography, Grid, Card, CardContent } from '@mui/material';
+import { Typography, Grid, Card, CardContent } from '@mui/material';
 
 function Scoreboard({ games, resetScores }) {
   return (

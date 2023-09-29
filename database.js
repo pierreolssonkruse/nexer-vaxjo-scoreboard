@@ -34,6 +34,18 @@ db.all("PRAGMA table_info(scores)", [], (err, columns) => {
     db.run(`ALTER TABLE scores ADD COLUMN wins INTEGER DEFAULT 0`);
   }
 
+  if (!columnNames.includes('losses')) {
+    db.run(`ALTER TABLE scores ADD COLUMN losses INTEGER DEFAULT 0`);
+  }
+
+  if (!columnNames.includes('draws')) {
+    db.run(`ALTER TABLE scores ADD COLUMN draws INTEGER DEFAULT 0`);
+  }
+
+  if (!columnNames.includes('points')) {
+    db.run(`ALTER TABLE scores ADD COLUMN points INTEGER DEFAULT 0`);
+  }
+
   if (!columnNames.includes('games_played')) {
     db.run(`ALTER TABLE scores ADD COLUMN games_played INTEGER DEFAULT 0`);
   }

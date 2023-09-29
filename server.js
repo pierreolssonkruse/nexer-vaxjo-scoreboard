@@ -58,8 +58,6 @@ app.get('/gameResults', (req, res) => {
   });
 });
 
-
-
 app.post('/scores', (req, res) => {
   const { name } = req.body;
   if (!name) {
@@ -94,7 +92,41 @@ app.post('/gameResult', (req, res) => {
       res.status(400).json({ error: err.message });
       return;
     }
-    res.json({ game_id: this.lastID });
+
+    const gameId = this.lastID;
+    let isDraw = false;
+
+    if (player1_score > player2_score) {
+      db.run(
+        `UPDATE scores SET wins = wins + 1, games_played = games_played + 1, total_goals = total_goals + ?, points = points + 3 WHERE id = ?`,
+        [player1_score, player1_id]
+      );
+      db.run(
+        `UPDATE scores SET losses = losses + 1, games_played = games_played + 1, total_goals = total_goals + ? WHERE id = ?`,
+        [player2_score, player2_id]
+      );
+    } else if (player1_score < player2_score) {
+      db.run(
+        `UPDATE scores SET wins = wins + 1, games_played = games_played + 1, total_goals = total_goals + ?, points = points + 3 WHERE id = ?`,
+        [player2_score, player2_id]
+      );
+      db.run(
+        `UPDATE scores SET losses = losses + 1, games_played = games_played + 1, total_goals = total_goals + ? WHERE id = ?`,
+        [player1_score, player1_id]
+      );
+    } else {
+      isDraw = true;
+      db.run(
+        `UPDATE scores SET draws = draws + 1, games_played = games_played + 1, total_goals = total_goals + ?, points = points + 1 WHERE id = ?`,
+        [player1_score, player1_id]
+      );
+      db.run(
+        `UPDATE scores SET draws = draws + 1, games_played = games_played + 1, total_goals = total_goals + ?, points = points + 1 WHERE id = ?`,
+        [player2_score, player2_id]
+      );
+    }
+
+    res.json({ game_id: gameId });
   });
 });
 
@@ -121,6 +153,29 @@ app.delete('/scores/:id', (req, res) => {
     res.json({ "message": "deleted", changes: this.changes });
   });
 });
+
+app.put('/scores/:id', (req, res) => {
+  const { id } = req.params;
+  const { wins = 0, games_played = 0, total_goals = 0 } = req.body;
+
+  const query = `
+      UPDATE scores 
+      SET 
+          wins = wins + ?, 
+          games_played = games_played + ?, 
+          total_goals = total_goals + ?
+      WHERE id = ?
+  `;
+
+  db.run(query, [wins, games_played, total_goals, id], (err) => {
+    if (err) {
+      res.status(500).send({ error: 'Failed to update player stats.' });
+      return;
+    }
+    res.send({ message: 'Player stats updated successfully.' });
+  });
+});
+
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
