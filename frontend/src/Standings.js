@@ -12,7 +12,7 @@ function Standings({ playersStats }) {
           <TableCell className="table-heading">Spelare</TableCell>
           <TableCell align="right" className="table-heading">Matcher</TableCell>
           <TableCell align="right" className="table-heading">Vinst</TableCell>
-          <TableCell align="right" className="table-heading">Oavgort</TableCell>
+          <TableCell align="right" className="table-heading">Oavgjort</TableCell>
           <TableCell align="right" className="table-heading">Förlust</TableCell>
           <TableCell align="right" className="table-heading">Mål</TableCell>
           <TableCell align="right" className="table-heading">Poäng</TableCell>
@@ -24,12 +24,12 @@ function Standings({ playersStats }) {
             <TableCell component="th" scope="row" className="table-data">
               {player.name}
             </TableCell>
-            <TableCell align="right" className="table-data">{player.games_played}</TableCell>
-            <TableCell align="right" className="table-data">{player.wins}</TableCell>
-            <TableCell align="right" className="table-data">{player.draws}</TableCell>
-            <TableCell align="right" className="table-data">{player.losses}</TableCell>
-            <TableCell align="right" className="table-data">{player.total_goals}</TableCell>
-            <TableCell align="right" className="table-data">{player.points}</TableCell>
+            <TableCell align="right" className="table-data">{player.games_played || 0}</TableCell>
+            <TableCell align="right" className="table-data">{player.games_played ? player.wins : 0}</TableCell>
+            <TableCell align="right" className="table-data">{player.games_played ? player.draws : 0}</TableCell>
+            <TableCell align="right" className="table-data">{player.games_played ? player.losses : 0}</TableCell>
+            <TableCell align="right" className="table-data">{player.games_played ? player.total_goals : 0}</TableCell>
+            <TableCell align="right" className="table-data">{player.games_played ? player.points : 0}</TableCell>
           </TableRow>
         ))}
       </TableBody>
