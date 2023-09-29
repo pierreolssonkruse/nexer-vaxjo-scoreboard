@@ -19,8 +19,10 @@ app.get('/scores', (req, res) => {
 
 app.get('/rankings', (req, res) => {
   const query = `
-    SELECT * FROM scores
-    ORDER BY (wins / games_played) DESC, total_goals DESC, wins DESC
+    SELECT *,
+           (3 * wins + games_played - (wins + losses)) AS points
+    FROM scores
+    ORDER BY points DESC, total_goals DESC, wins DESC
   `;
   db.all(query, [], (err, rows) => {
     if (err) {

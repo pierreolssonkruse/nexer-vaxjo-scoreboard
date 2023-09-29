@@ -1,4 +1,4 @@
-import { Typography, Grid, Card, CardContent } from '@mui/material';
+import { Typography, Grid, Card, CardContent, Box } from '@mui/material';
 
 function Scoreboard({ games, resetScores }) {
   return (
@@ -11,17 +11,22 @@ function Scoreboard({ games, resetScores }) {
 
         return (
           <Grid item key={index} xs={12}>
-            <Card>
+            <Card style={{ width: '500px', margin: '0 auto' }}>
               <CardContent>
-                <Typography variant="h5">
-                  Date: {game.date}
+                <Typography variant="h6" align="center" gutterBottom>
+                  {game.date}
                 </Typography>
-                <Typography variant="body1">
-                  {player1Name}: {player1Score}
-                </Typography>
-                <Typography variant="body1">
-                  {player2Name}: {player2Score}
-                </Typography>
+                <Box display="flex" justifyContent="space-between" mt={2}>
+                  <Typography variant="h6" align="left" style={{ flex: 1 }}>
+                    {player1Name}
+                  </Typography>
+                  <Typography variant="h4" align="center" style={{ flex: 1 }}>
+                    {player1Score}-{player2Score}
+                  </Typography>
+                  <Typography variant="h6" align="right" style={{ flex: 1 }}>
+                    {player2Name}
+                  </Typography>
+                </Box>
               </CardContent>
             </Card>
           </Grid>
