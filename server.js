@@ -176,6 +176,25 @@ app.put('/scores/:id', async (req, res) => {
   }
 });
 
+app.put('/resetStats', async (req, res) => {
+  try {
+    await db.none(`
+      UPDATE scores 
+      SET 
+          score = 0,
+          wins = 0,
+          games_played = 0,
+          total_goals = 0,
+          losses = 0,
+          draws = 0,
+          points = 0
+    `);
+    return res.json({ message: 'Player stats reset successfully.' });
+  } catch (err) {
+    return res.status(500).json({ error: 'Failed to reset player stats.' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
