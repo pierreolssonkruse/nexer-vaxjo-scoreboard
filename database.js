@@ -1,58 +1,66 @@
-const sqlite3 = require('sqlite3').verbose();
-const db = new sqlite3.Database('./scoreboard.db');
+const pgp = require('pg-promise')();
 
-db.run(`
-  CREATE TABLE IF NOT EXISTS scores (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT UNIQUE,
-    score INTEGER,
-    wins INTEGER DEFAULT 0,
-    games_played INTEGER DEFAULT 0,
-    total_goals INTEGER DEFAULT 0
-  )
-`);
+const connectionString = process.env.REACT_APP_DATABASE_URL;
+const db = pgp(connectionString);
 
-db.run(`
-  CREATE TABLE IF NOT EXISTS games (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    player1_id INTEGER,
-    player2_id INTEGER,
-    player1_score INTEGER,
-    player2_score INTEGER,
-    date TEXT,
-    FOREIGN KEY(player1_id) REFERENCES scores(id),
-    FOREIGN KEY(player2_id) REFERENCES scores(id)
-  )
-`);
+db.one("SHOW max_connections;")
+  .then(result => {
+    console.log("Max Connections:", result.max_connections);
+  })
+  .catch(error => {
+    console.error("Error fetching max connections:", error);
+  });
 
-db.all("PRAGMA table_info(scores)", [], (err, columns) => {
-  if (err) throw err;
+const createScoresTable = () => {
+  return db.none(`
+        CREATE TABLE IF NOT EXISTS scores (
+            id SERIAL PRIMARY KEY,
+            name TEXT UNIQUE,
+            score INTEGER,
+            wins INTEGER DEFAULT 0,
+            games_played INTEGER DEFAULT 0,
+            total_goals INTEGER DEFAULT 0,
+            losses INTEGER DEFAULT 0,
+            draws INTEGER DEFAULT 0,
+            points INTEGER DEFAULT 0
+        )
+    `);
+};
 
-  const columnNames = columns.map(col => col.name);
+const createGamesTable = () => {
+  return db.none(`
+        CREATE TABLE IF NOT EXISTS games (
+            id SERIAL PRIMARY KEY,
+            player1_id INTEGER,
+            player2_id INTEGER,
+            player1_score INTEGER,
+            player2_score INTEGER,
+            date TEXT,
+            FOREIGN KEY(player1_id) REFERENCES scores(id),
+            FOREIGN KEY(player2_id) REFERENCES scores(id)
+        )
+    `);
+};
 
-  if (!columnNames.includes('wins')) {
-    db.run(`ALTER TABLE scores ADD COLUMN wins INTEGER DEFAULT 0`);
-  }
+const addColumnIfNotExists = (tableName, columnName, columnDefinition) => {
+  return db.none(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${columnDefinition}`)
+    .catch(error => {
+      if (!error.message.includes('column') || !error.message.includes('already exists')) {
+        throw error;
+      }
+    });
+};
 
-  if (!columnNames.includes('losses')) {
-    db.run(`ALTER TABLE scores ADD COLUMN losses INTEGER DEFAULT 0`);
-  }
-
-  if (!columnNames.includes('draws')) {
-    db.run(`ALTER TABLE scores ADD COLUMN draws INTEGER DEFAULT 0`);
-  }
-
-  if (!columnNames.includes('points')) {
-    db.run(`ALTER TABLE scores ADD COLUMN points INTEGER DEFAULT 0`);
-  }
-
-  if (!columnNames.includes('games_played')) {
-    db.run(`ALTER TABLE scores ADD COLUMN games_played INTEGER DEFAULT 0`);
-  }
-
-  if (!columnNames.includes('total_goals')) {
-    db.run(`ALTER TABLE scores ADD COLUMN total_goals INTEGER DEFAULT 0`);
-  }
-});
+createScoresTable()
+  .then(createGamesTable)
+  .then(() => addColumnIfNotExists('scores', 'wins', 'INTEGER DEFAULT 0'))
+  .then(() => addColumnIfNotExists('scores', 'losses', 'INTEGER DEFAULT 0'))
+  .then(() => addColumnIfNotExists('scores', 'draws', 'INTEGER DEFAULT 0'))
+  .then(() => addColumnIfNotExists('scores', 'points', 'INTEGER DEFAULT 0'))
+  .then(() => addColumnIfNotExists('scores', 'games_played', 'INTEGER DEFAULT 0'))
+  .then(() => addColumnIfNotExists('scores', 'total_goals', 'INTEGER DEFAULT 0'))
+  .catch(error => {
+    console.error("Error during database initialization:", error);
+  });
 
 module.exports = db;

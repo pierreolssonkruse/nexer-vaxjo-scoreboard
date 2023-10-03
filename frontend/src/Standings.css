@@ -6,3 +6,7 @@
 .table-data {
   font-size: 1rem !important;
 }
+
+.table-points {
+  font-weight: bold !important;
+}

@@ -29,7 +29,7 @@ function Standings({ playersStats }) {
             <TableCell align="right" className="table-data">{player.games_played ? player.draws : 0}</TableCell>
             <TableCell align="right" className="table-data">{player.games_played ? player.losses : 0}</TableCell>
             <TableCell align="right" className="table-data">{player.games_played ? player.total_goals : 0}</TableCell>
-            <TableCell align="right" className="table-data">{player.games_played ? player.points : 0}</TableCell>
+            <TableCell align="right" className="table-points">{player.games_played ? player.points : 0}</TableCell>
           </TableRow>
         ))}
       </TableBody>
