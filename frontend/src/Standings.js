@@ -3,7 +3,7 @@ import { Table, TableHead, TableRow, TableCell, TableBody } from '@mui/material'
 import './Standings.css';
 
 function Standings({ playersStats }) {
-  const sortedPlayers = playersStats.sort((a, b) => b.wins - a.wins);
+  const sortedPlayers = [...playersStats].sort((a, b) => b.wins - a.wins);
 
   return (
     <Table>

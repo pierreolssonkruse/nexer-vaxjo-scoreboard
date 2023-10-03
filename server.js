@@ -21,10 +21,9 @@ app.get('/scores', async (req, res) => {
 app.get('/rankings', async (req, res) => {
   try {
     const query = `
-    SELECT *,
-    (3 * wins + games_played - (wins + losses)) AS calculated_points
+    SELECT *
     FROM scores
-    ORDER BY calculated_points DESC, total_goals DESC, wins DESC
+    ORDER BY points DESC, total_goals DESC, wins DESC
     `;
     const rows = await db.any(query);
     return res.json({ data: rows });
@@ -32,6 +31,7 @@ app.get('/rankings', async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 });
+
 
 app.get('/gameResults', async (req, res) => {
   try {
@@ -85,9 +85,51 @@ app.post('/gameResult', async (req, res) => {
   `;
 
   try {
-    const gameResult = await db.one(sql, [player1_id, player2_id, player1_score, player2_score, currentDate]);
+    await db.one(sql, [player1_id, player2_id, player1_score, player2_score, currentDate]);
 
-    return res.json({ game_id: gameResult.id });
+    let player1Updates = { games_played: 1, total_goals: player1_score, points: 0 };
+    let player2Updates = { games_played: 1, total_goals: player2_score, points: 0 };
+
+    if (player1_score > player2_score) {
+      player1Updates.wins = 1;
+      player1Updates.points = 3;
+      player2Updates.losses = 1;
+    } else if (player1_score < player2_score) {
+      player1Updates.losses = 1;
+      player2Updates.wins = 1;
+      player2Updates.points = 3;
+    } else {
+      player1Updates.draws = 1;
+      player2Updates.draws = 1;
+      player1Updates.points = 1;
+      player2Updates.points = 1;
+    }
+
+    await db.none(`
+      UPDATE scores 
+      SET 
+          wins = wins + $1,
+          losses = losses + $2,
+          draws = draws + $3,
+          games_played = games_played + $4,
+          total_goals = total_goals + $5,
+          points = points + $6
+      WHERE id = $7
+    `, [player1Updates.wins || 0, player1Updates.losses || 0, player1Updates.draws || 0, player1Updates.games_played, player1Updates.total_goals, player1Updates.points, player1_id]);
+
+    await db.none(`
+      UPDATE scores 
+      SET 
+          wins = wins + $1,
+          losses = losses + $2,
+          draws = draws + $3,
+          games_played = games_played + $4,
+          total_goals = total_goals + $5,
+          points = points + $6
+      WHERE id = $7
+    `, [player2Updates.wins || 0, player2Updates.losses || 0, player2Updates.draws || 0, player2Updates.games_played, player2Updates.total_goals, player2Updates.points, player2_id]);
+
+    return res.json({ message: "Game result recorded and scores updated." });
   } catch (err) {
     return res.status(400).json({ error: err.message });
   }
