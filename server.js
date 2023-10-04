@@ -59,6 +59,25 @@ app.get('/gameResults', async (req, res) => {
   }
 });
 
+app.get('/goalDifferences', async (req, res) => {
+  try {
+    const query = `
+      SELECT s.id, s.name, 
+             SUM(CASE WHEN g.player1_id = s.id THEN g.player1_score - g.player2_score
+                      WHEN g.player2_id = s.id THEN g.player2_score - g.player1_score 
+                      ELSE 0 END) as goal_difference
+      FROM scores s
+      LEFT JOIN games g ON s.id = g.player1_id OR s.id = g.player2_id
+      GROUP BY s.id, s.name
+    `;
+
+    const rows = await db.any(query);
+    return res.json({ data: rows });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 app.post('/scores', async (req, res) => {
   const { name } = req.body;
   if (!name) {
@@ -84,26 +103,59 @@ app.post('/gameResult', async (req, res) => {
     VALUES ($1, $2, $3, $4, $5) RETURNING id
   `;
 
+  let player1Updates = {
+    games_played: 1,
+    total_goals: player1_score,
+    goals_conceded: player2_score,
+    points: 0
+  };
+
+  let player2Updates = {
+    games_played: 1,
+    total_goals: player2_score,
+    goals_conceded: player1_score,
+    points: 0
+  };
+
+  if (player1_score > player2_score) {
+    player1Updates.wins = 1;
+    player1Updates.points = 3;
+    player2Updates.losses = 1;
+  } else if (player1_score < player2_score) {
+    player1Updates.losses = 1;
+    player2Updates.wins = 1;
+    player2Updates.points = 3;
+  } else {
+    player1Updates.draws = 1;
+    player2Updates.draws = 1;
+    player1Updates.points = 1;
+    player2Updates.points = 1;
+  }
+
   try {
     await db.one(sql, [player1_id, player2_id, player1_score, player2_score, currentDate]);
 
-    let player1Updates = { games_played: 1, total_goals: player1_score, points: 0 };
-    let player2Updates = { games_played: 1, total_goals: player2_score, points: 0 };
-
-    if (player1_score > player2_score) {
-      player1Updates.wins = 1;
-      player1Updates.points = 3;
-      player2Updates.losses = 1;
-    } else if (player1_score < player2_score) {
-      player1Updates.losses = 1;
-      player2Updates.wins = 1;
-      player2Updates.points = 3;
-    } else {
-      player1Updates.draws = 1;
-      player2Updates.draws = 1;
-      player1Updates.points = 1;
-      player2Updates.points = 1;
-    }
+    await db.none(`
+      UPDATE scores 
+      SET 
+          wins = wins + $1,
+          losses = losses + $2,
+          draws = draws + $3,
+          games_played = games_played + $4,
+          total_goals = total_goals + $5,
+          goals_conceded = goals_conceded + $6,
+          points = points + $7
+      WHERE id = $8
+    `, [
+      player1Updates.wins || 0,
+      player1Updates.losses || 0,
+      player1Updates.draws || 0,
+      player1Updates.games_played,
+      player1Updates.total_goals,
+      player1Updates.goals_conceded,
+      player1Updates.points,
+      player1_id
+    ]);
 
     await db.none(`
       UPDATE scores 
@@ -113,21 +165,19 @@ app.post('/gameResult', async (req, res) => {
           draws = draws + $3,
           games_played = games_played + $4,
           total_goals = total_goals + $5,
-          points = points + $6
-      WHERE id = $7
-    `, [player1Updates.wins || 0, player1Updates.losses || 0, player1Updates.draws || 0, player1Updates.games_played, player1Updates.total_goals, player1Updates.points, player1_id]);
-
-    await db.none(`
-      UPDATE scores 
-      SET 
-          wins = wins + $1,
-          losses = losses + $2,
-          draws = draws + $3,
-          games_played = games_played + $4,
-          total_goals = total_goals + $5,
-          points = points + $6
-      WHERE id = $7
-    `, [player2Updates.wins || 0, player2Updates.losses || 0, player2Updates.draws || 0, player2Updates.games_played, player2Updates.total_goals, player2Updates.points, player2_id]);
+          goals_conceded = goals_conceded + $6,
+          points = points + $7
+      WHERE id = $8
+    `, [
+      player2Updates.wins || 0,
+      player2Updates.losses || 0,
+      player2Updates.draws || 0,
+      player2Updates.games_played,
+      player2Updates.total_goals,
+      player2Updates.goals_conceded,
+      player2Updates.points,
+      player2_id
+    ]);
 
     return res.json({ message: "Game result recorded and scores updated." });
   } catch (err) {
@@ -187,7 +237,8 @@ app.put('/resetStats', async (req, res) => {
           total_goals = 0,
           losses = 0,
           draws = 0,
-          points = 0
+          points = 0,
+          goals_conceded = 0
     `);
     return res.json({ message: 'Player stats reset successfully.' });
   } catch (err) {

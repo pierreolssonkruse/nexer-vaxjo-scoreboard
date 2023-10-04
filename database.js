@@ -22,7 +22,8 @@ const createScoresTable = () => {
             total_goals INTEGER DEFAULT 0,
             losses INTEGER DEFAULT 0,
             draws INTEGER DEFAULT 0,
-            points INTEGER DEFAULT 0
+            points INTEGER DEFAULT 0,
+            goals_conceded INTEGER DEFAULT 0
         )
     `);
 };
@@ -59,6 +60,7 @@ createScoresTable()
   .then(() => addColumnIfNotExists('scores', 'points', 'INTEGER DEFAULT 0'))
   .then(() => addColumnIfNotExists('scores', 'games_played', 'INTEGER DEFAULT 0'))
   .then(() => addColumnIfNotExists('scores', 'total_goals', 'INTEGER DEFAULT 0'))
+  .then(() => addColumnIfNotExists('scores', 'goals_conceded', 'INTEGER DEFAULT 0'))
   .catch(error => {
     console.error("Error during database initialization:", error);
   });

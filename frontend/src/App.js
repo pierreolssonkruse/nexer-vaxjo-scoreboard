@@ -91,7 +91,8 @@ function App() {
           axios.put(`http://localhost:3001/scores/${winnerId}`, {
             wins: 1,
             games_played: 1,
-            total_goals: gameResult.player1_score
+            total_goals: gameResult.player1_score,
+            goals_conceded: gameResult.player2_score
           }).catch(error => {
             console.error("Error updating winner stats:", error);
             if (error.response && error.response.data) {
@@ -101,7 +102,8 @@ function App() {
 
           axios.put(`http://localhost:3001/scores/${loserId}`, {
             games_played: 1,
-            total_goals: gameResult.player2_score
+            total_goals: gameResult.player2_score,
+            goals_conceded: gameResult.player1_score
           }).catch(error => {
             console.error("Error updating loser stats:", error);
             if (error.response && error.response.data) {
