@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
 import axios from 'axios';
 import Scoreboard from './Scoreboard';
 import Standings from './Standings';
 import myImage from './NBHL.jpg';
-import { AppBar, Toolbar, Button, TextField, Paper, Container, Grid, Typography, Select, MenuItem, Box } from '@mui/material';
+import { AppBar, Toolbar, Button, TextField, Paper, Container, Grid, Typography, Select, MenuItem, Box, Snackbar, Alert } from '@mui/material';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from './theme';
 
@@ -13,9 +13,11 @@ function App() {
   const [newPlayerName, setNewPlayerName] = useState('');
   const [isGameOn, setIsGameOn] = useState(false);
   const [currentGame, setCurrentGame] = useState({ player1_id: null, player2_id: null, player1_score: 0, player2_score: 0 });
-  const [rankings, setRankings] = useState([]);
   const [games, setGames] = useState([]);
   const [secondsLeft, setSecondsLeft] = useState(300);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [severity, setSeverity] = useState('info');
 
   useEffect(() => {
     axios.get('http://localhost:3001/scores')
@@ -23,13 +25,6 @@ function App() {
         setScores(response.data.data);
       });
   }, []);
-
-  useEffect(() => {
-    axios.get('http://localhost:3001/rankings')
-      .then(response => {
-        setRankings(response.data.data);
-      });
-  }, [scores]);
 
   useEffect(() => {
     fetch('http://localhost:3001/gameResults')
@@ -44,18 +39,6 @@ function App() {
       });
   }, []);
 
-  useEffect(() => {
-    if (isGameOn && secondsLeft > 0) {
-      const intervalId = setInterval(() => {
-        setSecondsLeft(prev => prev - 1);
-      }, 1000);
-      return () => clearInterval(intervalId);
-    }
-    if (secondsLeft <= 0) {
-      handleGameCompletion();
-    }
-  }, [isGameOn, secondsLeft]);
-
   const handleAddPlayer = () => {
     const newPlayer = { name: newPlayerName, score: 0, history: [] };
     axios.post('http://localhost:3001/scores', newPlayer)
@@ -68,18 +51,12 @@ function App() {
       });
   };
 
-  const handleDeletePlayer = (id) => {
-    axios.delete(`http://localhost:3001/scores/${id}`)
-      .then(() => {
-        const updatedScores = scores.filter(score => score.id !== id);
-        setScores(updatedScores);
-      })
-      .catch(error => {
-        console.error("Error deleting player:", error);
-      });
-  };
+  const getPlayerNameFromID = useCallback((id) => {
+    const player = scores.find(p => parseInt(p.id, 10) === parseInt(id, 10));
+    return player ? player.name : 'Unknown';
+  }, [scores]);
 
-  const handleGameCompletion = () => {
+  const handleGameCompletion = useCallback(() => {
     const gameResult = {
       player1_id: currentGame.player1_id,
       player2_id: currentGame.player2_id,
@@ -139,24 +116,43 @@ function App() {
           console.error("Server response:", error.response.data);
         }
       });
-  };
+  }, [currentGame, getPlayerNameFromID]);
+
+  useEffect(() => {
+    if (isGameOn && secondsLeft > 0) {
+      const intervalId = setInterval(() => {
+        setSecondsLeft(prev => prev - 1);
+      }, 1000);
+      return () => clearInterval(intervalId);
+    }
+    if (secondsLeft <= 0) {
+      handleGameCompletion();
+    }
+  }, [isGameOn, secondsLeft, handleGameCompletion]);
 
   const startGame = (player1_id, player2_id) => {
-    if (player1_id && player2_id && player1_id !== player2_id) {
-      setCurrentGame({
-        ...currentGame,
-        player1_id: player1_id,
-        player2_id: player2_id,
-        player1_score: 0,
-        player2_score: 0
-      });
-      setIsGameOn(true);
+    if (!player1_id || !player2_id) {
+      setSeverity('error');
+      setSnackbarMessage("Två spelarna måste väljas.");
+      setSnackbarOpen(true);
+      return;
     }
-  }
+    if (player1_id === player2_id) {
+      setSeverity('error');
+      setSnackbarMessage("Olika spelare måste väljas");
+      setSnackbarOpen(true);
+      return;
+    }
 
-  const getPlayerNameFromID = (id) => {
-    const player = scores.find(p => parseInt(p.id, 10) === parseInt(id, 10));
-    return player ? player.name : 'Unknown';
+    setCurrentGame({
+      ...currentGame,
+      player1_id: player1_id,
+      player2_id: player2_id,
+      player1_score: 0,
+      player2_score: 0
+    });
+    setIsGameOn(true);
+    setSecondsLeft(300);
   };
 
   return (
@@ -271,7 +267,6 @@ function App() {
                   </Paper>
                 </Grid>
               } />
-
               <Route path="/scoreboard" element={
                 <Grid item xs={12}>
                   <Paper elevation={3} style={{ padding: '20px' }}>
@@ -287,6 +282,16 @@ function App() {
             </Routes>
           </Grid>
         </Container>
+        <Snackbar
+          open={snackbarOpen}
+          autoHideDuration={6000}
+          onClose={() => setSnackbarOpen(false)}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+        >
+          <Alert onClose={() => setSnackbarOpen(false)} severity={severity}>
+            {snackbarMessage}
+          </Alert>
+        </Snackbar>
       </ThemeProvider>
     </Router>
   );
