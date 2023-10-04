@@ -4,6 +4,7 @@ import axios from 'axios';
 import Scoreboard from './Scoreboard';
 import Standings from './Standings';
 import myImage from './NBHL.jpg';
+import hornSound from './air-horn.mp3';
 import { AppBar, Toolbar, Button, TextField, Paper, Container, Grid, Typography, Select, MenuItem, Box, Snackbar, Alert } from '@mui/material';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from './theme';
@@ -120,6 +121,11 @@ function App() {
       });
   }, [currentGame, getPlayerNameFromID]);
 
+  const playHornSound = () => {
+    const audio = new Audio(hornSound);
+    audio.play();
+  };
+
   useEffect(() => {
     if (isGameOn && secondsLeft > 0) {
       const intervalId = setInterval(() => {
@@ -128,6 +134,7 @@ function App() {
       return () => clearInterval(intervalId);
     }
     if (secondsLeft <= 0) {
+      playHornSound();
       handleGameCompletion();
     }
   }, [isGameOn, secondsLeft, handleGameCompletion]);
