@@ -4,7 +4,12 @@ import './Standings.css';
 
 function Standings({ playersStats }) {
   const [showConfirm, setShowConfirm] = useState(false);
-  const sortedPlayers = [...playersStats].sort((a, b) => b.wins - a.wins);
+  const sortedPlayers = [...playersStats].sort((a, b) => {
+    if (a.points !== b.points) return b.points - a.points;
+    if (a.games_played !== b.games_played) return b.games_played - a.games_played;
+    if (a.total_goals !== b.total_goals) return b.total_goals - a.total_goals;
+    return a.name.localeCompare(b.name);
+  });
 
   const handleResetClick = () => {
     setShowConfirm(true);

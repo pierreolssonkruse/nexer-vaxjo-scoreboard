@@ -5,7 +5,7 @@ exports.handler = async (event, context) => {
     const query = `
         SELECT *
         FROM scores
-        ORDER BY points DESC, total_goals DESC, wins DESC, games_played DESC
+        ORDER BY points DESC, games_played DESC, total_goals DESC, name ASC
         `;
     const rows = await db.any(query);
     return {
