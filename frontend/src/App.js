@@ -29,7 +29,12 @@ function App() {
 
   useEffect(() => {
     fetch('/netlify/functions/getGameResults')
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! Status: ${res.status}`);
+        }
+        return res.json();
+      })
       .then(data => {
         if (data && data.data) {
           setGames(data.data);
@@ -39,6 +44,7 @@ function App() {
         console.error('Error fetching game results:', error);
       });
   }, []);
+
 
   const handleAddPlayer = () => {
     const newPlayer = { name: newPlayerName, score: 0, history: [] };
