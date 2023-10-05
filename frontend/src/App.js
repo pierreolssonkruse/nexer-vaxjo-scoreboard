@@ -28,20 +28,24 @@ function App() {
   }, []);
 
   useEffect(() => {
-    fetch('/netlify/functions/getGameResults')
-      .then(res => {
-        if (!res.ok) {
-          throw new Error(`HTTP error! Status: ${res.status}`);
-        }
-        return res.json();
-      })
-      .then(data => {
+    axios.get('/netlify/functions/getGameResults')
+      .then(response => {
+        const data = response.data;
         if (data && data.data) {
           setGames(data.data);
         }
       })
       .catch(error => {
-        console.error('Error fetching game results:', error);
+        if (error.response) {
+          console.error("Data:", error.response.data);
+          console.error("Status:", error.response.status);
+          console.error("Headers:", error.response.headers);
+        } else if (error.request) {
+          console.error("Request was made but no response was received:", error.request);
+        } else {
+          console.error("Error setting up the request:", error.message);
+        }
+        console.error('Full Error Object:', error.config);
       });
   }, []);
 
