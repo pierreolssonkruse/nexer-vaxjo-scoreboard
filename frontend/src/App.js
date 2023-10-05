@@ -21,14 +21,14 @@ function App() {
   const [severity, setSeverity] = useState('info');
 
   useEffect(() => {
-    axios.get('/.netlify/functions/getScores')
+    axios.get('/netlify/functions/getScores')
       .then(response => {
         setScores(response.data.data);
       });
   }, []);
 
   useEffect(() => {
-    fetch('/.netlify/functions/getGameResults')
+    fetch('/netlify/functions/getGameResults')
       .then(res => res.json())
       .then(data => {
         if (data && data.data) {
@@ -42,7 +42,7 @@ function App() {
 
   const handleAddPlayer = () => {
     const newPlayer = { name: newPlayerName, score: 0, history: [] };
-    axios.post('/.netlify/functions/postScores', newPlayer)
+    axios.post('/netlify/functions/postScores', newPlayer)
       .then(response => {
         setScores(prevScores => [...prevScores, { ...newPlayer, id: response.data.id }]);
         setNewPlayerName('');
@@ -65,7 +65,7 @@ function App() {
       player2_score: currentGame.player2_score
     };
 
-    axios.post('/.netlify/functions/postGameResult', gameResult)
+    axios.post('/netlify/functions/postGameResult', gameResult)
       .then(response => {
         setGames(prevGames => [...prevGames, {
           date: new Date().toISOString().slice(0, 10),
@@ -89,7 +89,7 @@ function App() {
         }
 
         if (winnerId) {
-          axios.put(`/.netlify/functions/putScoresById/${winnerId}`, {
+          axios.put(`/netlify/functions/putScoresById/${winnerId}`, {
             wins: 1,
             games_played: 1,
             total_goals: gameResult.player1_score,
@@ -101,7 +101,7 @@ function App() {
             }
           });
 
-          axios.put(`/.netlify/functions/putScoresById/${loserId}`, {
+          axios.put(`/netlify/functions/putScoresById/${loserId}`, {
             games_played: 1,
             total_goals: gameResult.player2_score,
             goals_conceded: gameResult.player1_score
