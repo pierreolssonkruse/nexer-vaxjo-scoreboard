@@ -232,7 +232,7 @@ function App() {
                           Lägg till
                         </Button>
                         <Select value={currentGame.player1_id || ''} onChange={e => setCurrentGame({ ...currentGame, player1_id: e.target.value })} style={{ backgroundColor: 'white', marginRight: '10px' }}>
-                          {scores.map(player => (
+                          {scores?.map(player => (
                             <MenuItem key={player.id} value={player.id}>{player.name}</MenuItem>
                           ))}
                         </Select>

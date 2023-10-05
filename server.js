@@ -32,7 +32,6 @@ app.get('/rankings', async (req, res) => {
   }
 });
 
-
 app.get('/gameResults', async (req, res) => {
   try {
     const query = `
@@ -54,25 +53,6 @@ app.get('/gameResults', async (req, res) => {
       ]
     }));
     return res.json({ data: formattedData });
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
-  }
-});
-
-app.get('/goalDifferences', async (req, res) => {
-  try {
-    const query = `
-      SELECT s.id, s.name, 
-             SUM(CASE WHEN g.player1_id = s.id THEN g.player1_score - g.player2_score
-                      WHEN g.player2_id = s.id THEN g.player2_score - g.player1_score 
-                      ELSE 0 END) as goal_difference
-      FROM scores s
-      LEFT JOIN games g ON s.id = g.player1_id OR s.id = g.player2_id
-      GROUP BY s.id, s.name
-    `;
-
-    const rows = await db.any(query);
-    return res.json({ data: rows });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
