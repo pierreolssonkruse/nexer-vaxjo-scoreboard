@@ -240,7 +240,7 @@ function App() {
                           vs
                         </Typography>
                         <Select value={currentGame.player2_id || ''} onChange={e => setCurrentGame({ ...currentGame, player2_id: e.target.value })} style={{ backgroundColor: 'white', marginLeft: '10px' }}>
-                          {scores.map(player => (
+                          {scores?.map(player => (
                             <MenuItem key={player.id} value={player.id}>{player.name}</MenuItem>
                           ))}
                         </Select>
