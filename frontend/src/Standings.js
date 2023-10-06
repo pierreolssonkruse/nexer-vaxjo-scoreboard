@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Table, TableHead, TableRow, TableCell, TableBody, Button, Modal, Box } from '@mui/material';
 import './Standings.css';
 
-function Standings({ playersStats }) {
+function Standings({ playersStats = [] }) {
   const [showConfirm, setShowConfirm] = useState(false);
 
   const sortedPlayers = [...playersStats].sort((a, b) => {
