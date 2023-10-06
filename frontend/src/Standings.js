@@ -18,7 +18,7 @@ function Standings({ playersStats = [] }) {
 
   const handleConfirmReset = async () => {
     try {
-      const response = await fetch('/netlify/functions/resetStats', {
+      const response = await fetch('/.netlify/functions/resetStats', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
