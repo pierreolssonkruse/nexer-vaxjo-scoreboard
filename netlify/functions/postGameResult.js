@@ -3,7 +3,10 @@ const db = require('../../database');
 exports.handler = async (event, context) => {
   const { player1_id, player2_id, player1_score, player2_score } = JSON.parse(event.body);
   if (!player1_id || !player2_id || player1_score === undefined || player2_score === undefined) {
-    return res.status(400).json({ error: "Incomplete game data" });
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ error: "Incomplete game data" })
+    };
   }
 
   const currentDate = new Date().toISOString().slice(0, 10);
@@ -88,8 +91,14 @@ exports.handler = async (event, context) => {
       player2_id
     ]);
 
-    return res.json({ message: "Game result recorded and scores updated." });
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ message: "Game result recorded and scores updated." })
+    };
   } catch (err) {
-    return res.status(400).json({ error: err.message });
+    return {
+      statusCode: 400,
+      body: JSON.stringify({ error: err.message })
+    };
   }
 };
