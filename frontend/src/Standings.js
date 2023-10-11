@@ -24,7 +24,7 @@ function Standings({ playersStats = [] }) {
     if (!playerToDelete) return;
 
     try {
-      const response = await fetch(`/.netlify/functions/deleteScores${playerToDelete}`, {
+      const response = await fetch(`/.netlify/functions/deleteScores?id=${playerToDelete}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
