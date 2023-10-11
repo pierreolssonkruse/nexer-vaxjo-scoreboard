@@ -1,7 +1,10 @@
 const pgp = require('pg-promise')();
 
-const connectionString = process.env.REACT_APP_DATABASE_URL;
-const db = pgp(connectionString);
+const db = pgp({
+  connectionString: process.env.REACT_APP_DATABASE_URL,
+  max: 20,
+  idleTimeoutMillis: 30000,
+});
 
 db.one("SHOW max_connections;")
   .then(result => {

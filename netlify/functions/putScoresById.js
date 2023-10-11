@@ -14,8 +14,15 @@ exports.handler = async (event, context) => {
 
   try {
     await db.none(query, [wins, games_played, total_goals, id]);
-    return res.json({ message: 'Player stats updated successfully.' });
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ message: 'Player stats updated successfully.' })
+    };
   } catch (err) {
-    return res.status(500).json({ error: 'Failed to update player stats.' });
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Failed to update player stats.' })
+    };
   }
 };
+
