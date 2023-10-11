@@ -288,9 +288,13 @@ function App() {
               } />
               <Route path="/scoreboard" element={
                 <Grid item xs={12}>
-                  <Paper elevation={3} style={{ padding: '20px' }}>
+                  {games && games.length > 0 ? (
+                    <Paper elevation={3} style={{ padding: '20px' }}>
+                      <Scoreboard games={games} />
+                    </Paper>
+                  ) : (
                     <Scoreboard games={games} />
-                  </Paper>
+                  )}
                 </Grid>
               } />
               <Route path="/standings" element={

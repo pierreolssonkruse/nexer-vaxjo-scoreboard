@@ -32,10 +32,13 @@ function Scoreboard({ games, resetScores }) {
           </Grid>
         );
       }) : (
-        <Typography variant="body1">No games available.</Typography>
+        <Typography variant="body1" style={{ fontStyle: 'italic', fontSize: '1.2rem' }}>
+          Inga spel tillgängliga.
+        </Typography>
       )}
     </Grid>
   );
 }
 
 export default Scoreboard;
+
