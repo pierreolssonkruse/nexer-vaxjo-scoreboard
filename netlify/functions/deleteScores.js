@@ -1,10 +1,10 @@
-const db = require('../../database');
+const { myDatabaseQuery } = require('../../database');
 
 exports.handler = async (event, context) => {
   const id = event.queryStringParameters.id;
 
   try {
-    await db.none('DELETE FROM scores WHERE id = $1', [id]);
+    await myDatabaseQuery('DELETE FROM scores WHERE id = $1', [id]);
     return {
       statusCode: 200,
       body: JSON.stringify({ "message": "deleted" })
@@ -15,4 +15,4 @@ exports.handler = async (event, context) => {
       body: JSON.stringify({ "error": err.message })
     };
   }
-};
+}

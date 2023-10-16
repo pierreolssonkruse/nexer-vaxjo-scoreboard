@@ -1,4 +1,4 @@
-const db = require('../../database');
+const { myDatabaseQuery } = require('../../database');
 
 exports.handler = async (event, context) => {
   const { player1_id, player2_id, player1_score, player2_score } = JSON.parse(event.body);
@@ -45,9 +45,9 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    await db.one(sql, [player1_id, player2_id, player1_score, player2_score, currentDate]);
+    await myDatabaseQuery(sql, [player1_id, player2_id, player1_score, player2_score, currentDate]);
 
-    await db.none(`
+    await myDatabaseQuery(`
       UPDATE scores 
       SET 
           wins = wins + $1,
@@ -69,7 +69,7 @@ exports.handler = async (event, context) => {
       player1_id
     ]);
 
-    await db.none(`
+    await myDatabaseQuery(`
       UPDATE scores 
       SET 
           wins = wins + $1,
@@ -101,4 +101,4 @@ exports.handler = async (event, context) => {
       body: JSON.stringify({ error: err.message })
     };
   }
-};
+}

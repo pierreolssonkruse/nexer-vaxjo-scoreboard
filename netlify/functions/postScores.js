@@ -1,4 +1,4 @@
-const db = require('../../database');
+const { myDatabaseQuery } = require('../../database');
 
 exports.handler = async (event, context) => {
   const { name } = JSON.parse(event.body);
@@ -11,7 +11,7 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    const result = await db.one('INSERT INTO scores (name) VALUES ($1) RETURNING id', [name]);
+    const result = await myDatabaseQuery('INSERT INTO scores (name) VALUES ($1) RETURNING id', [name]);
     return {
       statusCode: 200,
       body: JSON.stringify({ "player_id": result.id })
@@ -22,4 +22,4 @@ exports.handler = async (event, context) => {
       body: JSON.stringify({ "error": err.message })
     };
   }
-};
+}

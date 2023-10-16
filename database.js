@@ -1,71 +1,104 @@
-const pgp = require('pg-promise')();
+const { Pool } = require('pg');
 
-const db = pgp({
+const pool = new Pool({
   connectionString: process.env.REACT_APP_DATABASE_URL,
-  max: 20,
-  idleTimeoutMillis: 30000,
+  max: 5,
+  idleTimeoutMillis: 500,
+  connectionTimeoutMillis: 2000,
 });
 
-db.one("SHOW max_connections;")
-  .then(result => {
-    console.log("Max Connections:", result.max_connections);
-  })
-  .catch(error => {
-    console.error("Error fetching max connections:", error);
-  });
+pool.on('connect', async (client) => {
+  console.log('Connected to the database');
+  try {
+    await client.query("SET idle_in_transaction_session_timeout = '1s';");
+    console.log('Set idle_in_transaction_session_timeout to 1 second');
+  } catch (error) {
+    console.error('Error setting idle_in_transaction_session_timeout:', error);
+  }
+});
 
-const createScoresTable = () => {
-  return db.none(`
-        CREATE TABLE IF NOT EXISTS scores (
-            id SERIAL PRIMARY KEY,
-            name TEXT UNIQUE,
-            score INTEGER,
-            wins INTEGER DEFAULT 0,
-            games_played INTEGER DEFAULT 0,
-            total_goals INTEGER DEFAULT 0,
-            losses INTEGER DEFAULT 0,
-            draws INTEGER DEFAULT 0,
-            points INTEGER DEFAULT 0,
-            goals_conceded INTEGER DEFAULT 0
-        )
+pool.on('acquire', (client) => {
+  console.log('Client checked out from the pool');
+});
+
+pool.on('remove', (client) => {
+  console.log('Client checked back into the pool');
+});
+
+const myDatabaseQuery = async (queryText, values) => {
+  try {
+    const res = await pool.query({ text: queryText, values: values });
+    return res.rows;
+  } catch (error) {
+    console.error('Database query error:', error);
+    throw error;
+  }
+};
+
+const createScoresTable = async () => {
+  console.log('About to create scores table...');
+  try {
+    await myDatabaseQuery(`
+      CREATE TABLE IF NOT EXISTS scores (
+          id SERIAL PRIMARY KEY,
+          name TEXT UNIQUE,
+          score INTEGER,
+          wins INTEGER DEFAULT 0,
+          games_played INTEGER DEFAULT 0,
+          total_goals INTEGER DEFAULT 0,
+          losses INTEGER DEFAULT 0,
+          draws INTEGER DEFAULT 0,
+          points INTEGER DEFAULT 0,
+          goals_conceded INTEGER DEFAULT 0
+      )
     `);
+    console.log('Scores table creation complete.');
+  } catch (error) {
+    console.error('Error during scores table creation:', error);
+  }
 };
 
-const createGamesTable = () => {
-  return db.none(`
-        CREATE TABLE IF NOT EXISTS games (
-            id SERIAL PRIMARY KEY,
-            player1_id INTEGER,
-            player2_id INTEGER,
-            player1_score INTEGER,
-            player2_score INTEGER,
-            date TEXT,
-            FOREIGN KEY(player1_id) REFERENCES scores(id),
-            FOREIGN KEY(player2_id) REFERENCES scores(id)
-        )
+const createGamesTable = async () => {
+  try {
+    await myDatabaseQuery(`
+      CREATE TABLE IF NOT EXISTS games (
+          id SERIAL PRIMARY KEY,
+          player1_id INTEGER,
+          player2_id INTEGER,
+          player1_score INTEGER,
+          player2_score INTEGER,
+          date TEXT,
+          FOREIGN KEY(player1_id) REFERENCES scores(id),
+          FOREIGN KEY(player2_id) REFERENCES scores(id)
+      )
     `);
+  } catch (error) {
+    console.error('Error during games table creation:', error);
+  }
 };
 
-const addColumnIfNotExists = (tableName, columnName, columnDefinition) => {
-  return db.none(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${columnDefinition}`)
-    .catch(error => {
-      if (!error.message.includes('column') || !error.message.includes('already exists')) {
-        throw error;
-      }
-    });
-};
+const alterTableQuery = `
+  ALTER TABLE scores
+  ADD COLUMN IF NOT EXISTS wins INTEGER DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS losses INTEGER DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS draws INTEGER DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS points INTEGER DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS games_played INTEGER DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS total_goals INTEGER DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS goals_conceded INTEGER DEFAULT 0;
+`;
 
-createScoresTable()
-  .then(createGamesTable)
-  .then(() => addColumnIfNotExists('scores', 'wins', 'INTEGER DEFAULT 0'))
-  .then(() => addColumnIfNotExists('scores', 'losses', 'INTEGER DEFAULT 0'))
-  .then(() => addColumnIfNotExists('scores', 'draws', 'INTEGER DEFAULT 0'))
-  .then(() => addColumnIfNotExists('scores', 'points', 'INTEGER DEFAULT 0'))
-  .then(() => addColumnIfNotExists('scores', 'games_played', 'INTEGER DEFAULT 0'))
-  .then(() => addColumnIfNotExists('scores', 'total_goals', 'INTEGER DEFAULT 0'))
-  .then(() => addColumnIfNotExists('scores', 'goals_conceded', 'INTEGER DEFAULT 0'))
-  .catch(error => {
+const initializeDatabase = async () => {
+  try {
+    await createScoresTable();
+    await createGamesTable();
+    await myDatabaseQuery(alterTableQuery);
+  } catch (error) {
     console.error("Error during database initialization:", error);
-  });
+  }
+};
 
-module.exports = db;
+module.exports = {
+  myDatabaseQuery,
+  initializeDatabase
+};

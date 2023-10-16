@@ -1,4 +1,4 @@
-const db = require('../../database');
+const { myDatabaseQuery } = require('../../database');
 
 exports.handler = async (event, context) => {
   try {
@@ -7,7 +7,7 @@ exports.handler = async (event, context) => {
         FROM scores
         ORDER BY points DESC, games_played DESC, total_goals DESC, name ASC
         `;
-    const rows = await db.any(query);
+    const rows = await myDatabaseQuery(query);
     return {
       statusCode: 200,
       body: JSON.stringify({ data: rows })
@@ -18,4 +18,4 @@ exports.handler = async (event, context) => {
       body: JSON.stringify({ error: err.message })
     };
   }
-};
+}

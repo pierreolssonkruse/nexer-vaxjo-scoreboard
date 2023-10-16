@@ -5,6 +5,8 @@ import Scoreboard from './Scoreboard';
 import Standings from './Standings';
 import myImage from './NBHL.jpg';
 import hornSound from './air-horn.mp3';
+import sweFlag from './sweden-flag-png-large.png';
+import finFlag from './finland-flag-png-large.png';
 import { AppBar, Toolbar, Button, TextField, Paper, Container, Grid, Typography, Select, MenuItem, Box, Snackbar, Alert } from '@mui/material';
 import { ThemeProvider } from '@mui/material/styles';
 import theme from './theme';
@@ -104,23 +106,17 @@ function App() {
             games_played: 1,
             total_goals: gameResult.player1_score,
             goals_conceded: gameResult.player2_score
-          }).catch(error => {
-            console.error("Error updating winner stats:", error);
-            if (error.response && error.response.data) {
-              console.error("Server response:", error.response.data);
-            }
-          });
-
-          axios.put(`/.netlify/functions/putScoresById/${loserId}`, {
-            games_played: 1,
-            total_goals: gameResult.player2_score,
-            goals_conceded: gameResult.player1_score
-          }).catch(error => {
-            console.error("Error updating loser stats:", error);
-            if (error.response && error.response.data) {
-              console.error("Server response:", error.response.data);
-            }
-          });
+          })
+            .then(() => {
+              return axios.put(`/.netlify/functions/putScoresById/${loserId}`, {
+                games_played: 1,
+                total_goals: gameResult.player2_score,
+                goals_conceded: gameResult.player1_score
+              });
+            })
+            .catch(error => {
+              console.error("Error updating player stats:", error);
+            });
         }
       })
       .catch(error => {
@@ -152,7 +148,7 @@ function App() {
   const startGame = (player1_id, player2_id) => {
     if (!player1_id || !player2_id) {
       setSeverity('error');
-      setSnackbarMessage("Två spelarna måste väljas.");
+      setSnackbarMessage("Två spelare måste väljas.");
       setSnackbarOpen(true);
       return;
     }
@@ -220,37 +216,77 @@ function App() {
                         <Typography variant="h5" style={{ marginBottom: '20px' }}>
                           Spelinställningar
                         </Typography>
-                        <TextField
-                          value={newPlayerName}
-                          onChange={e => setNewPlayerName(e.target.value)}
-                          placeholder="Ange spelarens namn"
-                          variant="outlined"
-                          label="Spelarnamn"
-                          style={{ backgroundColor: 'white' }}
-                        />
-                        <Button onClick={handleAddPlayer} variant="contained" color="primary" style={{ backgroundColor: '#fec70a', color: 'black', marginLeft: '15px', marginTop: '10px', marginBottom: '10px' }}>
-                          Lägg till
-                        </Button>
-                        <Select value={currentGame.player1_id || ''} onChange={e => setCurrentGame({ ...currentGame, player1_id: e.target.value })} style={{ backgroundColor: 'white', marginRight: '10px' }}>
-                          {scores?.map(player => (
-                            <MenuItem key={player.id} value={player.id}>{player.name}</MenuItem>
-                          ))}
-                        </Select>
-                        <Typography variant="h6" style={{ display: 'inline', margin: '0 10px' }}>
-                          vs
-                        </Typography>
-                        <Select value={currentGame.player2_id || ''} onChange={e => setCurrentGame({ ...currentGame, player2_id: e.target.value })} style={{ backgroundColor: 'white', marginLeft: '10px' }}>
-                          {scores?.map(player => (
-                            <MenuItem key={player.id} value={player.id}>{player.name}</MenuItem>
-                          ))}
-                        </Select>
-
-                        <Button onClick={() => startGame(currentGame.player1_id, currentGame.player2_id)} variant="contained" style={{ margin: '20px 0', backgroundColor: '#fec70a', color: 'black' }}>
-                          Starta spelet
-                        </Button>
+                        <Grid container spacing={2} alignItems="center">
+                          <Grid item xs={8}>
+                            <TextField
+                              value={newPlayerName}
+                              onChange={e => setNewPlayerName(e.target.value)}
+                              placeholder="Ange spelarens namn"
+                              variant="outlined"
+                              label="Spelarnamn"
+                              fullWidth
+                              style={{ backgroundColor: 'white' }}
+                            />
+                          </Grid>
+                          <Grid item xs={4}>
+                            <Button onClick={handleAddPlayer} variant="contained" color="primary" fullWidth style={{ backgroundColor: '#fec70a', color: 'black' }}>
+                              Lägg till
+                            </Button>
+                          </Grid>
+                        </Grid>
+                        <Grid container spacing={2} alignItems="center" style={{ marginTop: '20px' }}>
+                          <Grid item xs={5}>
+                            <Select
+                              value={currentGame.player1_id || ''}
+                              onChange={e => setCurrentGame({ ...currentGame, player1_id: e.target.value })}
+                              fullWidth
+                              style={{ backgroundColor: 'white' }}
+                              displayEmpty
+                            >
+                              <MenuItem value="" disabled>
+                                <img src={sweFlag} alt="" style={{ width: '30px', marginRight: '10px' }} />
+                              </MenuItem>
+                              {scores?.map(player => (
+                                <MenuItem key={player.id} value={player.id}>{player.name}</MenuItem>
+                              ))}
+                            </Select>
+                          </Grid>
+                          <Grid item xs={2}>
+                            <Typography variant="h6" align="center">
+                              vs
+                            </Typography>
+                          </Grid>
+                          <Grid item xs={5}>
+                            <Select
+                              value={currentGame.player2_id || ''}
+                              onChange={e => setCurrentGame({ ...currentGame, player2_id: e.target.value })}
+                              fullWidth
+                              style={{ backgroundColor: 'white' }}
+                              displayEmpty
+                            >
+                              <MenuItem value="" disabled>
+                                <img src={finFlag} alt="" style={{ width: '30px', marginRight: '10px' }} />
+                              </MenuItem>
+                              {scores?.map(player => (
+                                <MenuItem key={player.id} value={player.id}>{player.name}</MenuItem>
+                              ))}
+                            </Select>
+                          </Grid>
+                        </Grid>
+                        <Grid container style={{ marginTop: '20px' }}>
+                          <Grid item xs={12}>
+                            <Button
+                              onClick={() => startGame(currentGame.player1_id, currentGame.player2_id)}
+                              variant="contained"
+                              fullWidth
+                              style={{ backgroundColor: '#fec70a', color: 'black' }}
+                            >
+                              Starta spelet
+                            </Button>
+                          </Grid>
+                        </Grid>
                       </>
                     )}
-
                     {isGameOn && (
                       <>
                         <Typography variant="h1" style={{ textAlign: 'center', marginBottom: '20px' }}>

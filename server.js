@@ -1,7 +1,8 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const db = require('./database');
+const myDatabaseQuery = require('./database');
+const { initializeDatabase } = require('./database');
 
 const app = express();
 const PORT = 3001;
@@ -11,7 +12,7 @@ app.use(cors());
 
 app.get('/scores', async (req, res) => {
   try {
-    const rows = await db.any('SELECT * FROM scores ORDER BY score DESC');
+    const rows = await myDatabaseQuery('SELECT * FROM scores ORDER BY score DESC');
     return res.json({ data: rows });
   } catch (err) {
     return res.status(500).json({ error: err.message });
@@ -25,7 +26,7 @@ app.get('/rankings', async (req, res) => {
     FROM scores
     ORDER BY points DESC, games_played DESC, total_goals DESC, name ASC
 `;
-    const rows = await db.any(query);
+    const rows = await myDatabaseQuery(query);
     return res.json({ data: rows });
   } catch (err) {
     return res.status(500).json({ error: err.message });
@@ -44,7 +45,7 @@ app.get('/gameResults', async (req, res) => {
       ORDER BY g.date DESC
     `;
 
-    const rows = await db.any(query);
+    const rows = await myDatabaseQuery(query);
     const formattedData = rows.map(row => ({
       date: row.date,
       scores: [
@@ -64,8 +65,8 @@ app.post('/scores', async (req, res) => {
     return res.status(400).json({ "error": "Player name is required" });
   }
   try {
-    const result = await db.one('INSERT INTO scores (name) VALUES ($1) RETURNING id', [name]);
-    return res.json({ "player_id": result.id });
+    const result = await myDatabaseQuery('INSERT INTO scores (name) VALUES ($1) RETURNING id', [name]);
+    return res.json({ "player_id": result[0].id });
   } catch (err) {
     return res.status(400).json({ "error": err.message });
   }
@@ -113,9 +114,9 @@ app.post('/gameResult', async (req, res) => {
   }
 
   try {
-    await db.one(sql, [player1_id, player2_id, player1_score, player2_score, currentDate]);
+    await myDatabaseQuery(sql, [player1_id, player2_id, player1_score, player2_score, currentDate]);
 
-    await db.none(`
+    await myDatabaseQuery(`
       UPDATE scores 
       SET 
           wins = wins + $1,
@@ -137,7 +138,7 @@ app.post('/gameResult', async (req, res) => {
       player1_id
     ]);
 
-    await db.none(`
+    await myDatabaseQuery(`
       UPDATE scores 
       SET 
           wins = wins + $1,
@@ -169,7 +170,7 @@ app.put('/scores/:name', async (req, res) => {
   const playerName = req.params.name;
   const { score } = req.body;
   try {
-    await db.none('UPDATE scores SET score = $1 WHERE name = $2', [score, playerName]);
+    await myDatabaseQuery('UPDATE scores SET score = $1 WHERE name = $2', [score, playerName]);
     return res.json({ "message": "score updated" });
   } catch (err) {
     return res.status(400).json({ "error": err.message });
@@ -178,7 +179,7 @@ app.put('/scores/:name', async (req, res) => {
 
 app.delete('/scores/:id', async (req, res) => {
   try {
-    await db.none('DELETE FROM scores WHERE id = $1', [req.params.id]);
+    await myDatabaseQuery('DELETE FROM scores WHERE id = $1', [req.params.id]);
     return res.json({ "message": "deleted" });
   } catch (err) {
     return res.status(400).json({ "error": err.message });
@@ -199,7 +200,7 @@ app.put('/scores/:id', async (req, res) => {
   `;
 
   try {
-    await db.none(query, [wins, games_played, total_goals, id]);
+    await myDatabaseQuery(query, [wins, games_played, total_goals, id]);
     return res.json({ message: 'Player stats updated successfully.' });
   } catch (err) {
     return res.status(500).json({ error: 'Failed to update player stats.' });
@@ -208,7 +209,7 @@ app.put('/scores/:id', async (req, res) => {
 
 app.put('/resetStats', async (req, res) => {
   try {
-    await db.none(`
+    await myDatabaseQuery(`
       UPDATE scores 
       SET 
           score = 0,
@@ -226,6 +227,13 @@ app.put('/resetStats', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`Server is running on port ${PORT}`);
+  try {
+    console.log('Starting database initialization...');
+    await initializeDatabase();
+    console.log('Database initialization completed successfully.');
+  } catch (error) {
+    console.error('Database initialization failed:', error);
+  }
 });

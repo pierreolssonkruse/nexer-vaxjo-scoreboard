@@ -1,4 +1,4 @@
-const db = require('../../database');
+const { myDatabaseQuery } = require('../../database');
 
 exports.handler = async (event, context) => {
   const { id } = event.queryStringParameters;
@@ -13,16 +13,17 @@ exports.handler = async (event, context) => {
   `;
 
   try {
-    await db.none(query, [wins, games_played, total_goals, id]);
+    await myDatabaseQuery(query, [wins, games_played, total_goals, id]);
     return {
       statusCode: 200,
       body: JSON.stringify({ message: 'Player stats updated successfully.' })
     };
   } catch (err) {
+    console.log(err);
     return {
       statusCode: 500,
       body: JSON.stringify({ error: 'Failed to update player stats.' })
     };
   }
-};
+}
 

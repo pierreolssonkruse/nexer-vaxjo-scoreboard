@@ -1,8 +1,8 @@
-const db = require('../../database');
+const { myDatabaseQuery } = require('../../database');
 
 exports.handler = async (event, context) => {
   try {
-    await db.none(`
+    await myDatabaseQuery(`
       UPDATE scores 
       SET 
           score = 0,
@@ -18,4 +18,4 @@ exports.handler = async (event, context) => {
   } catch (err) {
     return res.status(500).json({ error: 'Failed to reset player stats.' });
   }
-};
+}

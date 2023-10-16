@@ -1,4 +1,5 @@
-const db = require('../../database');
+const { myDatabaseQuery } = require('../../database');
+console.log(myDatabaseQuery, 'myDatabaseQuery');
 
 exports.handler = async (event, context) => {
   try {
@@ -12,7 +13,7 @@ exports.handler = async (event, context) => {
           ORDER BY g.date DESC
         `;
 
-    const rows = await db.any(query);
+    const rows = await myDatabaseQuery(query);
     const formattedData = rows.map(row => ({
       date: row.date,
       scores: [
@@ -31,4 +32,4 @@ exports.handler = async (event, context) => {
       body: JSON.stringify({ error: err.message })
     };
   }
-};
+}
