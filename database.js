@@ -68,8 +68,8 @@ const createGamesTable = async () => {
           player1_score INTEGER,
           player2_score INTEGER,
           date TEXT,
-          FOREIGN KEY(player1_id) REFERENCES scores(id),
-          FOREIGN KEY(player2_id) REFERENCES scores(id)
+          FOREIGN KEY(player1_id) REFERENCES scores(id) ON DELETE CASCADE,
+          FOREIGN KEY(player2_id) REFERENCES scores(id) ON DELETE CASCADE
       )
     `);
   } catch (error) {
