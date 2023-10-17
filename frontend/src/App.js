@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
 import axios from 'axios';
 import Scoreboard from './Scoreboard';
 import Standings from './Standings';
+//import Header from './Header';
 import myImage from './NBHL.jpg';
 import hornSound from './air-horn.mp3';
 import sweFlag from './sweden-flag-png-large.png';
@@ -221,9 +222,8 @@ function App() {
                             <TextField
                               value={newPlayerName}
                               onChange={e => setNewPlayerName(e.target.value)}
-                              placeholder="Ange spelarens namn"
-                              variant="outlined"
-                              label="Spelarnamn"
+                              label="Ange spelarens namn"
+                              variant="filled"
                               fullWidth
                               style={{ backgroundColor: 'white' }}
                             />
