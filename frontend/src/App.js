@@ -206,7 +206,9 @@ function App() {
             <Routes>
               <Route path="/" element={
                 <Grid item xs={12} style={{ textAlign: 'center', marginTop: '-20px' }}>
-                  <img src={myImage} alt="Description" style={{ maxWidth: '40vw', height: 'auto' }} />
+                  <Link to="/start-game" style={{ textDecoration: 'none' }}>
+                    <img src={myImage} alt="Description" style={{ maxWidth: '40vw', height: 'auto' }} />
+                  </Link>
                 </Grid>
               } />
               <Route path="/start-game" element={
